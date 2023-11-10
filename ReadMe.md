@@ -2,6 +2,11 @@
 
 > simple RESTful API return a json result of products
 
+## Informations:
+- Mock Api has been implemented by **Nodejs**
+- **Verivox** Tariff Api has been implemented in **Asp.net Core 6 (LTS Version)**
+- Every request getting the tariff data from the Mock Api
+
 **Badges will go here**
 
 - Dotnet 6 and C# 10
@@ -30,11 +35,10 @@
 ## Installation
 
 - All the `code` required to get started
-- Images of what it should look like
 
 ### Clone
 
-- Clone this repo to your local machine using `https://github.com/SaMirzaei/PopCore.git`
+- Clone this repo to your local machine using `https://github.com/SaMirzaei/verivox.git`
 
 ### Setup
 
@@ -46,12 +50,13 @@ $ docker-compose -f ./docker-compose.yml up
 ```
 ### See Swagger Page
 
-open http://localhost:5000/index.html
-open http://localhost:3000/api
+Verivox.Calc-Api: http://localhost:5000/index.html
+<br />
+Mock-Api: http://localhost:3000/api
 ---
 
 
 ## License
 
 - **[MIT license](http://opensource.org/licenses/mit-license.php)**
-- Copyright 2022 � <a href="http://verivox.de/" target="_blank">verivox.de/</a>.
+- Copyright 2022 � <a href="http://verivox.de/" target="_blank">verivox.de/</a>
