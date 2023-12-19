@@ -1,40 +1,58 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Verivox.Application.Interfaces;
 using Verivox.Application.Models;
 using Verivox.Application.Wrappers;
-using Verivox.Domain.Entities;
 using Verivox.Domain.Interfaces;
 
 namespace Verivox.Application.Features.Tariffs.Queries
 {
     public class TariffCalculationHandler : IRequestHandler<GetTariffByConsumptionQuery, Response<List<Comparison>>>
     {
-        private List<ElectricityProduct> _products;
+        private readonly ITariffProvider _tariffProvider;
+        private readonly ILogger<TariffCalculationHandler> _logger;
 
-        public TariffCalculationHandler(ITariffProvider tariffProvider)
+        public TariffCalculationHandler(
+            ITariffProvider tariffProvider,
+            ILogger<TariffCalculationHandler> logger)
         {
-            Task.Run(async () => _products = await tariffProvider.GetProducts()).Wait();
+            _tariffProvider = tariffProvider ?? throw new ArgumentNullException(nameof(tariffProvider));
+            _logger = logger;
         }
 
         public async Task<Response<List<Comparison>>> Handle(GetTariffByConsumptionQuery request, CancellationToken cancellationToken)
         {
-            var result = new List<Comparison>();
-
-            foreach (var product in _products)
+            try
             {
-                var annualCost = ((IProductStrategy)product).GetCalculationStrategy(request.ConsumptionKwh);
+                var products = await _tariffProvider.GetProducts();
 
-                result.Add(new Comparison
+                if (products is null)
                 {
-                    TariffName = product.Name,
-                    AnnualCost = annualCost
-                });
-            }
+                    _logger.LogWarning("Provider: {Provider} Failed to retrieve products from the tariff provider.", nameof(TariffCalculationHandler));
+                    return new Response<List<Comparison>>("Failed to retrieve products.");
+                }
 
-            return await Task.FromResult(new Response<List<Comparison>>(result));
+                var result = products
+                    .Select(t => new Comparison
+                    {
+                        TariffName = t.Name,
+                        AnnualCost = ((IProductStrategy)t).GetCalculationStrategy(request.ConsumptionKwh)
+                    })
+                    .ToList();
+
+                _logger.LogInformation("Tariff calculation completed successfully. Consumption: {Consumption}", request.ConsumptionKwh);
+                return new Response<List<Comparison>>(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred during tariff calculation.");
+                return new Response<List<Comparison>>(ex.GetBaseException().Message);
+            }
         }
     }
 }
